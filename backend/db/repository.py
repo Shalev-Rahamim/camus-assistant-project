@@ -104,13 +104,6 @@ async def save_interaction_log(
     """
     Saves interaction log to the database in the background.
     This function should be called asynchronously to avoid blocking the user response.
-
-    Args:
-        db: Database session
-        question: The student's question
-        answer: The AI's response
-        category: Category name (string) or CategoryEnum
-        process_time_ms: Processing time in milliseconds
     """
     try:
         # Convert category string to CategoryEnum if needed

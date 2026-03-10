@@ -16,8 +16,8 @@ def test_sanitize_input():
 @pytest.mark.asyncio
 async def test_process_campus_query_out_of_context():
     # אנחנו עושים Mock לפונקציה classify_question כדי שלא תפנה באמת ל-AI
-    with patch("ai.service.classify_question", new_callable=AsyncMock) as mock_classify:
-        from ai.service import process_campus_query
+    with patch("ai.classifier.classify_question", new_callable=AsyncMock) as mock_classify:
+        from ai.rag import process_campus_query
         from db.models import CategoryEnum
 
         # מגדירים שה-AI "כאילו" זיהה שהשאלה מחוץ להקשר
