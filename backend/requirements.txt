@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+sqlalchemy>=2.0.0
+aiosqlite
+pydantic-settings
+google-generativeai
+python-dotenv
