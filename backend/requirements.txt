@@ -3,5 +3,9 @@ uvicorn
 sqlalchemy>=2.0.0
 aiosqlite
 pydantic-settings
-google-generativeai
+google-genai    
 python-dotenv
+slowapi           
+pytest          
+pytest-asyncio    
+httpx       
