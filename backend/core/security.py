@@ -4,12 +4,6 @@ import re
 def sanitize_input(text: str) -> str:
     """
     Remove potential prompt injection patterns from user input.
-
-    Args:
-        text: Raw user input string
-
-    Returns:
-        Sanitized string with dangerous patterns removed
     """
     dangerous_patterns = [
         "ignore previous",
@@ -32,7 +26,6 @@ def sanitize_input(text: str) -> str:
     # Remove dangerous patterns (case-insensitive)
     for pattern in dangerous_patterns:
         text = re.sub(re.escape(pattern), "", text, flags=re.IGNORECASE)
-
     # Remove template injection attempts (curly braces)
     text = text.replace("{", "").replace("}", "")
 

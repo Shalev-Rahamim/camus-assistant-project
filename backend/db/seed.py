@@ -194,7 +194,7 @@ async def seed_data():
                     term=ExamTermEnum.FIRST,
                 ),
                 Exam(
-                    courses_id=courses_data[4].id,
+                    course_id=courses_data[4].id,
                     room_id=rooms_data[1].id,
                     exam_date=date(2026, 7, 5),
                     start_time=time(9, 0),
