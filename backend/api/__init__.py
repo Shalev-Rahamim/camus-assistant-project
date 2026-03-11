@@ -1,5 +1,3 @@
-"""API routes and exception handlers."""
-
 from api.routes import router
 from api.tables import router as tables_router
 from api.admin import router as admin_router

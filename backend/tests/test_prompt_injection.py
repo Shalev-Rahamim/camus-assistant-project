@@ -1,8 +1,3 @@
-"""
-Comprehensive Prompt Injection Security Tests
-Tests various prompt injection attack vectors to assess system security.
-"""
-
 import pytest
 from unittest.mock import patch, MagicMock
 from ai.rag import process_campus_query

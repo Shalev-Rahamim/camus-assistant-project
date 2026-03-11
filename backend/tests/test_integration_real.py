@@ -1,8 +1,3 @@
-"""
-REAL Integration Tests - Tests with actual components (minimal mocking).
-These tests are slower but test the actual system behavior.
-"""
-
 import pytest
 from unittest.mock import patch, MagicMock
 from ai.rag import process_campus_query
@@ -62,7 +57,9 @@ async def test_real_database_context_retrieval(db_session, test_data):
     """
     # Use real classifier and real DB, but mock LLM
     with patch("ai.rag.ask_llm") as mock_llm:
-        mock_llm.return_value = "The office is open Sunday-Thursday between 09:00 and 14:00."
+        mock_llm.return_value = (
+            "The office is open Sunday-Thursday between 09:00 and 14:00."
+        )
 
         result = await process_campus_query("What are the office hours?", db_session)
 
@@ -80,9 +77,13 @@ async def test_real_database_schedule_context(db_session, test_data):
     Tests REAL database schedule context retrieval.
     """
     with patch("ai.rag.ask_llm") as mock_llm:
-        mock_llm.return_value = "Data Structures class is in Hall 101 - Engineering on Sunday 10:00-12:00."
+        mock_llm.return_value = (
+            "Data Structures class is in Hall 101 - Engineering on Sunday 10:00-12:00."
+        )
 
-        result = await process_campus_query("What room is my Data Structures class in?", db_session)
+        result = await process_campus_query(
+            "What room is my Data Structures class in?", db_session
+        )
 
         assert result["category"] == "SCHEDULE"
         # The context should come from real DB (test_data has this schedule)
@@ -115,7 +116,10 @@ async def test_real_out_of_context_detection(question, db_session):
 
         # Should be blocked early
         assert result["category"] == "OUT_OF_CONTEXT"
-        assert "campus assistant" in result["answer"].lower() or "academic" in result["answer"].lower()
+        assert (
+            "campus assistant" in result["answer"].lower()
+            or "academic" in result["answer"].lower()
+        )
 
 
 # ==========================================
@@ -148,7 +152,9 @@ async def test_real_fallback_detection_in_logs(db_session, test_data):
     latest_log = log.scalar_one_or_none()
 
     if latest_log:
-        assert latest_log.was_fallback == True, "Fallback should be detected for 'Sorry' keyword"
+        assert (
+            latest_log.was_fallback == True
+        ), "Fallback should be detected for 'Sorry' keyword"
 
 
 # ==========================================
@@ -258,7 +264,12 @@ async def test_multiple_real_queries(question, db_session, test_data):
 
         assert "answer" in result
         assert "category" in result
-        assert result["category"] in ["SCHEDULE", "GENERAL", "TECHNICAL", "OUT_OF_CONTEXT"]
+        assert result["category"] in [
+            "SCHEDULE",
+            "GENERAL",
+            "TECHNICAL",
+            "OUT_OF_CONTEXT",
+        ]
 
 
 # ==========================================
@@ -287,7 +298,9 @@ async def test_real_ambiguous_question_classification(db_session, test_data):
     """
     # Mock LLM to return GENERAL for ambiguous question
     with patch("ai.llm_client.ask_llm") as mock_llm:
-        mock_llm.return_value = "GENERAL"  # Ambiguous questions should default to GENERAL
+        mock_llm.return_value = (
+            "GENERAL"  # Ambiguous questions should default to GENERAL
+        )
 
         result = await process_campus_query("Hello, can you help me?", db_session)
 

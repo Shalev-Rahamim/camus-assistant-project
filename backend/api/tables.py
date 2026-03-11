@@ -1,5 +1,3 @@
-"""Public endpoints for viewing tables (schedules, knowledge base)."""
-
 import logging
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, Depends
@@ -79,7 +77,9 @@ async def get_schedules(
 
 @router.get("/knowledge-base", response_model=List[KnowledgeBaseResponse])
 async def get_knowledge_base(
-    category: Optional[str] = Query(None, description="Filter by category: technical, general"),
+    category: Optional[str] = Query(
+        None, description="Filter by category: technical, general"
+    ),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
@@ -98,10 +98,12 @@ async def get_knowledge_base(
             except ValueError:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Invalid category. Must be one of: technical, general"
+                    detail=f"Invalid category. Must be one of: technical, general",
                 )
 
-        query = query.limit(limit).offset(offset).order_by(KnowledgeBase.topic_or_question)
+        query = (
+            query.limit(limit).offset(offset).order_by(KnowledgeBase.topic_or_question)
+        )
         result = await db.execute(query)
         items = result.scalars().all()
 

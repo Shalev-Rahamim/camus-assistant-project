@@ -1,5 +1,3 @@
-"""AI services and utilities."""
-
 from ai.rag import process_campus_query
 from ai.classifier import classify_question
 from ai.prompt_manager import build_generation_prompt, BASE_SYSTEM_INSTRUCTION

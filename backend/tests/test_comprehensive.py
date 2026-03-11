@@ -1,8 +1,3 @@
-"""
-Comprehensive test suite for the Campus Assistant RAG pipeline.
-Tests success flows, rollback scenarios, and OUT_OF_CONTEXT blocking.
-"""
-
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 from ai.rag import process_campus_query

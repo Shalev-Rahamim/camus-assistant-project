@@ -1,5 +1,3 @@
-"""Admin API routes - Login and Dashboard only."""
-
 import logging
 from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status

@@ -1,5 +1,3 @@
-"""Conversation management endpoints for chat history."""
-
 import logging
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends, Header

@@ -1,8 +1,3 @@
-"""
-Pytest fixtures for database testing.
-Provides test database session and test data setup.
-"""
-
 import sys
 from pathlib import Path
 
