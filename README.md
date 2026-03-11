@@ -1,7 +1,7 @@
 ## Campus Elad Software – AI Campus Assistant
 
 ### Overview
-Campus Elad Software is a full‑stack web app that helps students get fast answers about campus information (schedules, exams, services, etc.) using an AI assistant with a RAG (Retrieval‑Augmented Generation) backend.
+Smart Campus Assistant is an AI-powered platform developed during a hackathon in collaboration with Elad Software. It utilizes a RAG architecture (FastAPI, SQLite, Google Gemini) to provide students with instant, reliable answers about campus schedules, facilities, and policie
 
 - **Backend**: FastAPI, async SQLAlchemy, SQLite (dev), Gemini (google‑genai)
 - **Frontend**: Vanilla JS, HTML, CSS (hash‑based routing, single‑page feel)
