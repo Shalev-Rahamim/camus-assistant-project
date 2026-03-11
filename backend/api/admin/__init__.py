@@ -1,7 +1,5 @@
-"""Admin API module for CRUD operations."""
+"""Admin API module - exports router for easy import."""
 
-from api.admin import schemas
-from api.admin import crud
 from api.admin.routes import router
 
-__all__ = ["schemas", "crud", "router"]
+__all__ = ["router"]

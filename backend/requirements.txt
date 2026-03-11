@@ -8,4 +8,6 @@ python-dotenv
 slowapi           
 pytest          
 pytest-asyncio    
-httpx       
+httpx
+bcrypt
+python-jose[cryptography]       

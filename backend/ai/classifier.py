@@ -6,7 +6,7 @@ import logging
 # The system prompt that instructs the LLM how to categorize user queries.
 # Uses Few-Shot prompting for high precision and strict formatting.
 logger = logging.getLogger(__name__)
-DEFAULT_CATEGORY: Final = CategoryEnum.GENERAL
+DEFAULT_CATEGORY: Final[CategoryEnum] = CategoryEnum.GENERAL
 MAX_RETRIES: Final = 1
 CLASSIFIER_PROMPT = """
 You are a highly precise classification API for a university campus assistant.
@@ -23,16 +23,16 @@ STRICT RULES:
 2. If the query is ambiguous, default to GENERAL.
 
 EXAMPLES:
-User: "באיזה חדר יש לי שיעור מבני נתונים?"
+User: "What room is my data structures class in?"
 SCHEDULE
 
-User: "איך מגישים בקשה למלגת הצטיינות?"
+User: "How do I apply for an excellence scholarship?"
 GENERAL
 
-User: "האינטרנט באולם 101 לא מתחבר לי"
+User: "The internet in hall 101 is not connecting"
 TECHNICAL
 
-User: "מה מזג האוויר מחר בתל אביב?"
+User: "What's the weather tomorrow in Tel Aviv?"
 OUT_OF_CONTEXT
 
 User: "{question}"
@@ -42,7 +42,7 @@ User: "{question}"
 async def classify_question(question: str) -> CategoryEnum:
     """
     Analyzes the user's question using an LLM and maps it to a predefined CategoryEnum.
-    Returns CategoryEnum.GENERAL as a fallback in case of errors.
+    Returns DEFAULT_CATEGORY (GENERAL) as a fallback in case of errors.
     """
     # Local imports to prevent circular dependency issues
     from ai.llm_client import ask_llm
@@ -54,14 +54,18 @@ async def classify_question(question: str) -> CategoryEnum:
     for attempt in range(MAX_RETRIES + 1):
         raw_response = await ask_llm(prompt, temperature=0.0)
         if raw_response == "FALLBACK_ERROR":
-            print(f"⚠️ Classifier attempt {attempt + 1} failed. Retrying...")
+            logger.warning(f"Classifier attempt {attempt + 1} failed. Retrying...")
             continue
         clean_res = raw_response.strip().upper()
         try:
             return CategoryEnum(clean_res.lower())
         except ValueError:
-            print(f"⚠️ Failed to parse category: '{clean_res}', falling back to GENERAL")
-            return CategoryEnum.GENERAL
+            logger.warning(
+                f"Failed to parse category: '{clean_res}', falling back to {DEFAULT_CATEGORY.name}"
+            )
+            return DEFAULT_CATEGORY
 
-    logger.warning("Classifier exhausted all retries. Defaulting to GENERAL.")
-    return CategoryEnum.GENERAL
+    logger.warning(
+        f"Classifier exhausted all retries. Defaulting to {DEFAULT_CATEGORY.name}."
+    )
+    return DEFAULT_CATEGORY

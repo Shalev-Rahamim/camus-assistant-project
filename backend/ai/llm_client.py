@@ -10,21 +10,21 @@ logger = logging.getLogger(__name__)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
-    raise ValueError("⚠️ Error: GEMINI_API_KEY is missing in .env file!")
+    raise ValueError("Error: GEMINI_API_KEY is missing in .env file!")
 
 # Initialize the client. This is the NEW way to configure the SDK.
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 
 async def ask_llm(
-    prompt: str, system_instruction: str = None, temperature: float = 0.7
+    prompt: str, system_instruction: str = None, temperature: float = 0.2
 ) -> str:
     """
     Core function to communicate with the LLM using the current google-genai SDK.
     Includes timeout protection and fallback error handling.
     """
     try:
-        print(f"📡 Sending request to Gemini (Temp: {temperature})...")
+        logger.debug(f"Sending request to Gemini (Temp: {temperature})...")
 
         # Build the configuration object for the model
         config = types.GenerateContentConfig(
@@ -44,9 +44,9 @@ async def ask_llm(
         return response.text
 
     except asyncio.TimeoutError:
-        logger.error("🛑 Timeout: AI API took too long to respond.")
+        logger.error("Timeout: AI API took too long to respond.")
         return "FALLBACK_ERROR"
 
     except Exception as e:
-        logger.error(f"❌ LLM API Error: {e}")
+        logger.error(f"LLM API Error: {e}")
         return "FALLBACK_ERROR"

@@ -1,8 +1,9 @@
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from db.models import CategoryEnum, Exam, KnowledgeBase, Schedule, InteractionLog
+from ai.classifier import DEFAULT_CATEGORY
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +94,7 @@ async def get_campus_context(session: AsyncSession, category: CategoryEnum) -> s
         return ""
 
     except Exception as e:
-        logger.error(f"❌ DB Query Error for category {category.name}: {str(e)}")
+        logger.error(f"DB Query Error for category {category.name}: {str(e)}")
         # Return empty string to trigger the LLM Fallback safely
         return ""
 
@@ -111,15 +112,23 @@ async def save_interaction_log(
             try:
                 category_enum = CategoryEnum(category.lower())
             except ValueError:
-                logger.warning(f"Invalid category '{category}', defaulting to GENERAL")
-                category_enum = CategoryEnum.GENERAL
+                logger.warning(
+                    f"Invalid category '{category}', defaulting to {DEFAULT_CATEGORY.name}"
+                )
+                category_enum = DEFAULT_CATEGORY
         else:
             category_enum = category
 
-        # Detect fallback responses (Hebrew keywords)
+        # Detect fallback responses (English keywords)
         is_fallback = any(
             keyword in answer
-            for keyword in ["מצטער", "שגיאה", "לא קיים", "לא נמצא", "אינו זמין"]
+            for keyword in [
+                "Sorry",
+                "Error",
+                "not available",
+                "not found",
+                "unavailable",
+            ]
         )
 
         log_entry = InteractionLog(
@@ -133,10 +142,10 @@ async def save_interaction_log(
         db.add(log_entry)
         await db.commit()
         logger.debug(
-            f"✅ Interaction log saved: {category_enum.name} ({process_time_ms}ms)"
+            f"Interaction log saved: {category_enum.name} ({process_time_ms}ms)"
         )
 
     except Exception as e:
-        logger.error(f"❌ Failed to save interaction log: {e}")
+        logger.error(f"Failed to save interaction log: {e}")
         await db.rollback()
         # Don't raise - logging failures shouldn't break the API

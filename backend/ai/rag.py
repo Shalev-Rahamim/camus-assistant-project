@@ -22,7 +22,7 @@ async def process_campus_query(question: str, db: AsyncSession) -> dict:
     # Guardrail: Handle queries that are outside the defined campus scope
     if category == CategoryEnum.OUT_OF_CONTEXT:
         return {
-            "answer": "אני עוזר קמפוס בלבד. במה אוכל לעזור בנושאי לימודים?",
+            "answer": "I'm a campus assistant only. How can I help you with academic matters?",
             "category": category.name,
         }
 
@@ -34,7 +34,7 @@ async def process_campus_query(question: str, db: AsyncSession) -> dict:
 
     # Handle cases where no relevant information was found in the database (Fallback)
     if prompt == "FALLBACK_NO_INFO":
-        answer = "מצטער, המידע לא קיים במאגר שלי."
+        answer = "Sorry, the information is not available in my database."
     else:
         # 4. Generation: Request the final answer from the LLM client
         answer = await ask_llm(
@@ -43,8 +43,8 @@ async def process_campus_query(question: str, db: AsyncSession) -> dict:
 
         # Handle technical API failures or timeouts
         if answer == "FALLBACK_ERROR":
-            answer = "שירות ה-AI אינו זמין כרגע, נסה שוב מאוחר יותר."
+            answer = "The AI service is currently unavailable. Please try again later."
         elif "FALLBACK_NO_INFO" in answer:
-            answer = "מצטער, המידע שחיפשת לא נמצא במערכת השעות או בנהלי הקמפוס."
+            answer = "Sorry, the information you searched for was not found in the schedule or campus policies."
 
     return {"answer": answer, "category": category.name}

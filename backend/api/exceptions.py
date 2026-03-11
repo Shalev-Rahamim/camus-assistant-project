@@ -8,7 +8,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     return JSONResponse(
         status_code=422,
         content={
-            "answer": "השאלה ארוכה מדי (מקסימום 150 תווים). אנא נסה לקצר.",
+            "answer": "The question is too long (maximum 150 characters). Please shorten it.",
             "category": "VALIDATION_ERROR",
         },
     )
@@ -18,7 +18,7 @@ async def rate_limit_exception_handler(request: Request, exc: RateLimitExceeded)
     return JSONResponse(
         status_code=429,
         content={
-            "answer": "יותר מדי בקשות. אנא נסה שוב בעוד דקה.",
+            "answer": "Too many requests. Please try again in a minute.",
             "category": "RATE_LIMIT_ERROR",
         },
     )

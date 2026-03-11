@@ -1,4 +1,5 @@
 import time
+import logging
 from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import get_db, async_session_maker
@@ -8,7 +9,34 @@ from core.security import sanitize_input
 from core.ratelimit import limiter
 from db.repository import save_interaction_log
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
+
+
+@router.get("/", tags=["Landing"])
+async def landing_page():
+    """
+    Landing page endpoint - returns available options for the main page.
+    """
+    return {
+        "title": "Campus Elad Software",
+        "description": "Welcome to Campus Elad Software",
+        "options": [
+            {
+                "id": "chat",
+                "title": "AI Chat",
+                "description": "Ask questions about campus, schedules, exams, and more",
+                "route": "/api/v1/ask",
+            },
+            {
+                "id": "tables",
+                "title": "Information Tables",
+                "description": "View schedules, technical questions, and general questions",
+                "route": "/api/v1/tables",
+            },
+        ],
+    }
 
 
 async def _save_log_background(
@@ -32,7 +60,9 @@ class QuestionRequest(BaseModel):
     def validate_and_sanitize(cls, value: str) -> str:
         sanitized = sanitize_input(value)
         if len(sanitized) < 2:
-            raise ValueError("השאלה שהוזנה אינה חוקית או קצרה מדי. אנא נסח שוב.")
+            raise ValueError(
+                "The entered question is invalid or too short. Please rephrase."
+            )
         return sanitized
 
 
@@ -68,7 +98,6 @@ async def ask_question(
         )
 
         return result
-    except HTTPException:
-        raise
     except Exception as e:
+        logger.error(f"Error processing question: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal Error")
