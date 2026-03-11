@@ -138,6 +138,9 @@ This will run unit and integration tests for the RAG pipeline, security, and dat
 
 ---
 
+- My tests: 127 from 127 passed
+
+
 ### 5. Deployment Notes (Basic)
 
 - For development: SQLite + `uvicorn --reload` is enough.
