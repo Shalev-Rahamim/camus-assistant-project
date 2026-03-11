@@ -2,8 +2,7 @@
 
 import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.database import async_session_maker, init_db
-from db.models import AdminUser
+from db import async_session_maker, init_db, AdminUser
 from api.admin.auth import get_password_hash
 
 

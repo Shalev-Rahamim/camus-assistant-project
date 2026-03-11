@@ -13,8 +13,7 @@ from api.admin.auth import (
     verify_admin,
     ACCESS_TOKEN_EXPIRE_MINUTES,
 )
-from db.database import get_db
-from db.models import AdminUser
+from db import get_db, AdminUser
 
 logger = logging.getLogger(__name__)
 

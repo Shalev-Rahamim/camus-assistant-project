@@ -1,8 +1,9 @@
 import asyncio
 from datetime import time, date
 from sqlalchemy import select
-from db.database import async_session_maker, init_db
-from db.models import (
+from db import (
+    async_session_maker,
+    init_db,
     Room,
     Course,
     Schedule,

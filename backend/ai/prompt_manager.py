@@ -1,6 +1,6 @@
 import logging
 from typing import Final
-from db.models import CategoryEnum
+from db import CategoryEnum
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ def build_generation_prompt(
     Returns:
     A formatted string ready to be processed by the LLM.
     """
-    from core.security import sanitize_input
+    from core import sanitize_input
 
     # Sanitize question again (defense in depth - in case it wasn't sanitized earlier)
     clean_question = sanitize_input(question)

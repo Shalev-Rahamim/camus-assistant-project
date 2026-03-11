@@ -8,8 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from pydantic import BaseModel
 
-from db.database import get_db
-from db.models import Schedule, KnowledgeBase, CategoryEnum, Course, Room
+from db import get_db, Schedule, KnowledgeBase, CategoryEnum, Course, Room
 
 logger = logging.getLogger(__name__)
 

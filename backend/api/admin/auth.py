@@ -11,8 +11,7 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 
-from db.database import get_db
-from db.models import AdminUser
+from db import get_db, AdminUser
 
 load_dotenv()
 

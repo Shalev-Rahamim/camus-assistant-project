@@ -1,4 +1,4 @@
-from db.models import CategoryEnum
+from db import CategoryEnum
 from typing import Final
 import logging
 

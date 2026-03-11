@@ -2,7 +2,7 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
-from db.models import CategoryEnum, Exam, KnowledgeBase, Schedule, InteractionLog
+from db import CategoryEnum, Exam, KnowledgeBase, Schedule, InteractionLog
 from ai.classifier import DEFAULT_CATEGORY
 
 logger = logging.getLogger(__name__)

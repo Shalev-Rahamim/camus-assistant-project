@@ -2,11 +2,10 @@ import time
 import logging
 from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.database import get_db, async_session_maker
+from db import get_db, async_session_maker
 from pydantic import BaseModel, Field, field_validator
 from ai import process_campus_query
-from core.security import sanitize_input
-from core.ratelimit import limiter
+from core import sanitize_input, limiter
 from db.repository import save_interaction_log
 
 logger = logging.getLogger(__name__)

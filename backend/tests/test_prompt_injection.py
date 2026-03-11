@@ -7,7 +7,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from ai.rag import process_campus_query
 from db.models import CategoryEnum
-from core.security import sanitize_input
+from core import sanitize_input
 from ai.prompt_manager import build_generation_prompt
 from sqlalchemy.ext.asyncio import AsyncSession
 

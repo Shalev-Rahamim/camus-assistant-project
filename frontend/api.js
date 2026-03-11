@@ -1,6 +1,17 @@
 // API Configuration
 const API_BASE_URL = 'http://localhost:8000/api/v1';
 
+// Session ID Management
+function getOrCreateSessionId() {
+    let sessionId = localStorage.getItem('chat_session_id');
+    if (!sessionId) {
+        // Generate a unique session ID
+        sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('chat_session_id', sessionId);
+    }
+    return sessionId;
+}
+
 // API Helper Functions
 class API {
     static async request(endpoint, options = {}) {
@@ -8,6 +19,7 @@ class API {
         const config = {
             headers: {
                 'Content-Type': 'application/json',
+                'X-Session-Id': getOrCreateSessionId(),
                 ...options.headers,
             },
             ...options,
@@ -21,6 +33,12 @@ class API {
 
         try {
             const response = await fetch(url, config);
+            
+            // Handle 204 No Content responses (like DELETE)
+            if (response.status === 204) {
+                return null;
+            }
+            
             const data = await response.json();
 
             if (!response.ok) {
@@ -70,5 +88,41 @@ class API {
 
     static async getAdminDashboard() {
         return this.request('/admin/dashboard');
+    }
+
+    // Conversations
+    static async createConversation(title = null) {
+        return this.request('/conversations', {
+            method: 'POST',
+            body: JSON.stringify({ title }),
+        });
+    }
+
+    static async listConversations(limit = 50, offset = 0) {
+        return this.request(`/conversations?limit=${limit}&offset=${offset}`);
+    }
+
+    static async getConversation(conversationId) {
+        return this.request(`/conversations/${conversationId}`);
+    }
+
+    static async addMessage(conversationId, role, content) {
+        return this.request(`/conversations/${conversationId}/messages`, {
+            method: 'POST',
+            body: JSON.stringify({ role, content }),
+        });
+    }
+
+    static async deleteConversation(conversationId) {
+        return this.request(`/conversations/${conversationId}`, {
+            method: 'DELETE',
+        });
+    }
+
+    static async updateConversationTitle(conversationId, title) {
+        return this.request(`/conversations/${conversationId}/title`, {
+            method: 'PATCH',
+            body: JSON.stringify({ title }),
+        });
     }
 }

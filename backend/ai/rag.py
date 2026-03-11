@@ -1,5 +1,5 @@
 import logging
-from db.models import CategoryEnum
+from db import CategoryEnum
 from ai.classifier import classify_question
 from ai.prompt_manager import build_generation_prompt, BASE_SYSTEM_INSTRUCTION
 from ai.llm_client import ask_llm

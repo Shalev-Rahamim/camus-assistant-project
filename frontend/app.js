@@ -1,5 +1,4 @@
 // App Initialization
-let currentUser = null;
 
 // Navigation Component
 function renderNavbar() {
@@ -8,11 +7,13 @@ function renderNavbar() {
     
     navbar.innerHTML = `
         <div class="navbar-content">
-            <a href="/" class="logo" onclick="router.navigate('/'); return false;">Campus Elad Software</a>
+            <a href="/" class="logo" onclick="router.navigate('/'); return false;">
+                <img src="static/Artboard-17.png" alt="Campus Elad Software" class="logo-img" />
+            </a>
             <ul class="nav-links">
                 <li><a href="/" onclick="router.navigate('/'); return false;">Home</a></li>
                 <li><a href="/chat" onclick="router.navigate('/chat'); return false;">AI Chat</a></li>
-                <li><a href="/tables" onclick="router.navigate('/tables'); return false;">Tables</a></li>
+                <li><a href="/tables" onclick="router.navigate('/tables'); return false;">Information</a></li>
                 ${token 
                     ? `<li><a href="/admin/dashboard" onclick="router.navigate('/admin/dashboard'); return false;">Admin</a></li>
                        <li><a href="#" onclick="handleLogout(); return false;">Logout</a></li>`
@@ -43,6 +44,7 @@ async function renderLandingPage() {
             '/api/v1/admin/login': '/admin/login'
         };
         
+        mainContent.className = 'main-content landing-page';
         mainContent.innerHTML = `
             <div class="landing-container">
                 <h1 class="landing-title">${data.title}</h1>
@@ -86,41 +88,68 @@ function getIcon(id) {
 
 // Chat Page
 let chatMessages = [];
-let welcomeMessageShown = false;
+let currentConversationId = null;
+let conversations = [];
+let isChatLoading = false;
 
-function renderChatPage() {
+async function renderChatPage() {
     const mainContent = document.getElementById('main-content');
+    mainContent.className = 'main-content';
     
-    // Show welcome message only once when chat page is first loaded
-    if (!welcomeMessageShown && chatMessages.length === 0) {
+    // Load conversations list
+    await loadConversations();
+    
+    // If no current conversation and no messages, show welcome message
+    if (!currentConversationId && chatMessages.length === 0) {
         chatMessages.push({
             type: 'ai',
             text: 'Hi! I\'m the AI Chat Assistant. I\'m here to help answer questions related to the campus, schedules, exams, and more. How can I assist you today?'
         });
-        welcomeMessageShown = true;
     }
     
     mainContent.innerHTML = `
-        <div class="chat-container">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">AI Chat</h2>
-                    <p class="card-description">Ask questions about campus, schedules, exams, and more</p>
+        <div class="chat-page-container">
+            <div class="chat-sidebar">
+                <div class="sidebar-header">
+                    <h3>Conversations</h3>
+                    <button class="btn btn-primary btn-sm" onclick="createNewConversation()" title="New Conversation">
+                        + New
+                    </button>
                 </div>
-                
-                <div class="chat-messages" id="chat-messages">
-                    ${chatMessages.map(msg => renderMessage(msg)).join('')}
+                <div class="conversations-list" id="conversations-list">
+                    ${renderConversationsList()}
                 </div>
-                
-                <div class="chat-input-container">
-                    <input 
-                        type="text" 
-                        id="chat-input" 
-                        class="chat-input" 
-                        placeholder="Type your question..."
-                        maxlength="150"
-                    />
-                    <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+            </div>
+            <div class="chat-main">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">AI Chat</h2>
+                        <p class="card-description">Ask questions about campus, schedules, exams, and more</p>
+                    </div>
+                    
+                    <div class="chat-messages" id="chat-messages">
+                        ${chatMessages.map(msg => renderMessage(msg)).join('')}
+                    </div>
+                    
+                    ${isChatLoading ? `
+                        <div class="chat-loading">
+                            <div class="chat-loading-dot"></div>
+                            <div class="chat-loading-dot"></div>
+                            <div class="chat-loading-dot"></div>
+                            <span class="chat-loading-text">Finds the relevant information from the data for you</span>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="chat-input-container">
+                        <input 
+                            type="text" 
+                            id="chat-input" 
+                            class="chat-input" 
+                            placeholder="Type your question..."
+                            maxlength="150"
+                        />
+                        <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -138,14 +167,177 @@ function renderChatPage() {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
+function renderConversationsList() {
+    if (conversations.length === 0) {
+        return '<div class="conversation-empty">No conversations yet. Start a new chat!</div>';
+    }
+    
+    return conversations.map(conv => {
+        const isActive = conv.id === currentConversationId;
+        const title = conv.title || `Conversation ${conv.id}`;
+        const date = new Date(conv.updated_at).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            year: conv.updated_at ? new Date(conv.updated_at).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined : undefined
+        });
+        
+        return `
+            <div class="conversation-item ${isActive ? 'active' : ''}" 
+                 onclick="loadConversation(${conv.id})"
+                 data-conversation-id="${conv.id}">
+                <div class="conversation-title">${escapeHtml(title)}</div>
+                <div class="conversation-date">${date}</div>
+                <button class="conversation-delete" 
+                        onclick="event.stopPropagation(); deleteConversation(${conv.id})" 
+                        title="Delete conversation">
+                    ×
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 function renderMessage(message) {
     const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const isUser = message.type === 'user';
+    const icon = isUser ? '👤' : '🤖';
+
+    let content = '';
+
+    if (isUser) {
+        // User message: text on the left, user icon on the right
+        content = `
+            <div class="message-row message-row-user">
+                <div class="message-content">
+                    <div class="message-text">${message.text}</div>
+                    <div class="message-time">${time}</div>
+                </div>
+                <div class="message-icon message-icon-right">${icon}</div>
+            </div>
+        `;
+    } else {
+        // AI message: robot icon on the left, text on the right
+        content = `
+            <div class="message-row message-row-ai">
+                <div class="message-icon message-icon-left">${icon}</div>
+                <div class="message-content">
+                    <div class="message-text">${message.text}</div>
+                    <div class="message-time">${time}</div>
+                </div>
+            </div>
+        `;
+    }
+
     return `
         <div class="message ${message.type}">
-            <div>${message.text}</div>
-            <div class="message-time">${time}</div>
+            ${content}
         </div>
     `;
+}
+
+// Format AI answer: clean time formats and append follow-up question
+function formatAiAnswer(text) {
+    if (!text || typeof text !== 'string') return text;
+
+    // Convert times like "08:00:00" to "08:00"
+    let formatted = text.replace(/\b(\d{2}:\d{2}):\d{2}\b/g, '$1');
+
+    // Ensure we don't duplicate the follow-up question if it's already there
+    const followUp = 'Is there anything else you would like to know?';
+    if (!formatted.trim().endsWith(followUp)) {
+        formatted = `${formatted.trim()}\n\n${followUp}`;
+    }
+
+    return formatted;
+}
+
+async function loadConversations() {
+    try {
+        conversations = await API.listConversations(50, 0);
+        // Update sidebar if it exists
+        const conversationsList = document.getElementById('conversations-list');
+        if (conversationsList) {
+            conversationsList.innerHTML = renderConversationsList();
+        }
+    } catch (error) {
+        console.error('Error loading conversations:', error);
+        conversations = [];
+    }
+}
+
+async function createNewConversation() {
+    try {
+        const newConv = await API.createConversation();
+        currentConversationId = newConv.id;
+        chatMessages = [];
+        
+        // Add welcome message for new conversation
+        chatMessages.push({
+            type: 'ai',
+            text: 'Hi! I\'m the AI Chat Assistant. I\'m here to help answer questions related to the campus, schedules, exams, and more. How can I assist you today?'
+        });
+        
+        await loadConversations();
+        renderChatPage();
+    } catch (error) {
+        console.error('Error creating conversation:', error);
+        alert('Failed to create new conversation. Please try again.');
+    }
+}
+
+async function loadConversation(conversationId) {
+    try {
+        const conversation = await API.getConversation(conversationId);
+        currentConversationId = conversationId;
+        
+        // Convert messages from API format to chat format
+        chatMessages = conversation.messages.map(msg => ({
+            type: msg.role === 'user' ? 'user' : 'ai',
+            text: msg.content
+        }));
+        
+        // Update conversations list to highlight active
+        await loadConversations();
+        renderChatPage();
+    } catch (error) {
+        console.error('Error loading conversation:', error);
+        alert('Failed to load conversation. Please try again.');
+    }
+}
+
+async function deleteConversation(conversationId) {
+    if (!confirm('Are you sure you want to delete this conversation?')) {
+        return;
+    }
+    
+    try {
+        await API.deleteConversation(conversationId);
+        
+        // Remove from conversations list immediately
+        conversations = conversations.filter(conv => conv.id !== conversationId);
+        
+        // If deleted conversation was current, clear it
+        if (currentConversationId === conversationId) {
+            currentConversationId = null;
+            chatMessages = [];
+        }
+        
+        // Update UI immediately
+        await loadConversations();
+        renderChatPage();
+    } catch (error) {
+        console.error('Error deleting conversation:', error);
+        // Even if there's an error, try to refresh the list
+        await loadConversations();
+        renderChatPage();
+        alert('Failed to delete conversation. Please try again.');
+    }
 }
 
 async function sendMessage() {
@@ -162,29 +354,79 @@ async function sendMessage() {
         return;
     }
 
+    // Create conversation if none exists
+    if (!currentConversationId) {
+        try {
+            const newConv = await API.createConversation();
+            currentConversationId = newConv.id;
+            await loadConversations();
+        } catch (error) {
+            console.error('Error creating conversation:', error);
+            alert('Failed to create conversation. Please try again.');
+            return;
+        }
+    }
+
     // Add user message
     chatMessages.push({ type: 'user', text: question });
+    
+    // Save user message to conversation
+    try {
+        await API.addMessage(currentConversationId, 'user', question);
+        
+        // Update conversation title if it's the first user message
+        const conversation = conversations.find(c => c.id === currentConversationId);
+        if (conversation && !conversation.title) {
+            const title = question.length > 50 ? question.substring(0, 50) + '...' : question;
+            await API.updateConversationTitle(currentConversationId, title);
+            await loadConversations();
+        }
+    } catch (error) {
+        console.error('Error saving user message:', error);
+    }
+    
     renderChatPage();
 
-    // Disable input
+    // Disable input and show loading indicator
     input.disabled = true;
     const sendBtn = input.nextElementSibling;
     sendBtn.disabled = true;
     sendBtn.textContent = 'Sending...';
+    isChatLoading = true;
+    renderChatPage();
 
     try {
         const response = await API.askQuestion(question);
+        const aiAnswer = formatAiAnswer(response.answer);
         
-        // Add AI response
-        chatMessages.push({ type: 'ai', text: response.answer });
+        // Add AI response with formatting
+        chatMessages.push({ type: 'ai', text: aiAnswer });
+        
+        // Save AI message to conversation
+        try {
+            await API.addMessage(currentConversationId, 'ai', aiAnswer);
+        } catch (error) {
+            console.error('Error saving AI message:', error);
+        }
+        
         renderChatPage();
     } catch (error) {
+        const errorMessage = error.message.includes('rate limit') 
+            ? 'Too many requests. Please try again in a minute.'
+            : 'Sorry, an error occurred. Please try again.';
+        
         chatMessages.push({ 
             type: 'ai', 
-            text: error.message.includes('rate limit') 
-                ? 'Too many requests. Please try again in a minute.'
-                : 'Sorry, an error occurred. Please try again.'
+            text: formatAiAnswer(errorMessage)
         });
+        
+        // Save error message to conversation
+        try {
+            await API.addMessage(currentConversationId, 'ai', formatAiAnswer(errorMessage));
+        } catch (err) {
+            console.error('Error saving error message:', err);
+        }
+        
         renderChatPage();
     } finally {
         input.disabled = false;
@@ -192,6 +434,8 @@ async function sendMessage() {
         sendBtn.textContent = 'Send';
         input.value = '';
         input.focus();
+        isChatLoading = false;
+        renderChatPage();
     }
 }
 
@@ -200,6 +444,7 @@ let currentTab = 'schedules';
 
 function renderTablesPage() {
     const mainContent = document.getElementById('main-content');
+    mainContent.className = 'main-content';
     mainContent.innerHTML = `
         <div class="card">
             <div class="card-header">
@@ -362,6 +607,7 @@ function renderKnowledgeBaseTable(data) {
 // Admin Login Page
 function renderAdminLoginPage() {
     const mainContent = document.getElementById('main-content');
+    mainContent.className = 'main-content';
     mainContent.innerHTML = `
         <div class="admin-container">
             <div class="card">
@@ -438,6 +684,7 @@ async function renderAdminDashboardPage() {
     }
 
     const mainContent = document.getElementById('main-content');
+    mainContent.className = 'main-content';
     mainContent.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
 
     try {

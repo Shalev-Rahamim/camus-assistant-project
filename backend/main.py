@@ -4,15 +4,24 @@ from fastapi.exceptions import RequestValidationError
 from slowapi.errors import RateLimitExceeded
 from api import (
     router as ai_router,
+    tables_router,
+    admin_router,
+    conversations_router,
     validation_exception_handler,
     rate_limit_exception_handler,
 )
-from api.tables import router as tables_router
-from api.admin import router as admin_router
-from core.ratelimit import limiter
+from core import limiter
+from db import init_db
 
 
 app = FastAPI(title="Campus Elad Software")
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database tables on application startup."""
+    await init_db()
+
 
 # CORS configuration - allows frontend to communicate with API
 app.add_middleware(
@@ -31,3 +40,4 @@ app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)
 app.include_router(ai_router, prefix="/api/v1")
 app.include_router(tables_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1")
+app.include_router(conversations_router, prefix="/api/v1")
